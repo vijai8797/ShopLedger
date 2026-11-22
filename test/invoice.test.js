@@ -35,7 +35,7 @@ test('CURRENT BEHAVIOUR: invoice #1001 uses explicit 5% and 12% GST rates with n
   assert.deepEqual(summary(checkoutFigures), summary(invoiceFigures));
 });
 
-test('CURRENT BEHAVIOUR: invoice #1002 calculates SAVE10 after GST while checkout discounts before GST', function () {
+test('CURRENT BEHAVIOUR: invoice #1002 matches checkout when SAVE10 is applied before GST', function () {
   var order = {
     coupon: 'SAVE10',
     items: [
@@ -47,18 +47,18 @@ test('CURRENT BEHAVIOUR: invoice #1002 calculates SAVE10 after GST while checkou
   var checkoutFigures = pricing.computeTotals(order.items, order.coupon);
 
   assert.deepEqual(summary(invoiceFigures), {
-    subtotal: 1020, discount: 107.1, tax: 51, cgst: 25.5, sgst: 25.5, total: 963.9
+    subtotal: 1020, discount: 102, tax: 45.9, cgst: 22.95, sgst: 22.95, total: 963.9
   });
   assert.deepEqual(invoiceFigures.rows, [
-    { name: 'Rice', sku: 'RICE-5', hsn: '1006', qty: 1, price: 640, gstPercent: 5, line: 640, lineTax: 32 },
-    { name: 'Sunflower Oil', sku: 'OIL-5', hsn: '1512', qty: 2, price: 190, gstPercent: 5, line: 380, lineTax: 19 }
+    { name: 'Rice', sku: 'RICE-5', hsn: '1006', qty: 1, price: 640, gstPercent: 5, line: 640, lineTax: 28.8 },
+    { name: 'Sunflower Oil', sku: 'OIL-5', hsn: '1512', qty: 2, price: 190, gstPercent: 5, line: 380, lineTax: 17.1 }
   ]);
   assert.deepEqual(summary(checkoutFigures), {
     subtotal: 1020, discount: 102, tax: 45.9, cgst: 22.95, sgst: 22.95, total: 963.9
   });
 });
 
-test('CURRENT BEHAVIOUR: invoice #1004 does not apply SAVE10 maximum discount cap', function () {
+test('CURRENT BEHAVIOUR: invoice #1004 matches checkout and applies the SAVE10 maximum discount cap', function () {
   var order = {
     coupon: 'SAVE10',
     items: [
@@ -69,14 +69,30 @@ test('CURRENT BEHAVIOUR: invoice #1004 does not apply SAVE10 maximum discount ca
   var checkoutFigures = pricing.computeTotals(order.items, order.coupon);
 
   assert.deepEqual(summary(invoiceFigures), {
-    subtotal: 2240, discount: 235.2, tax: 112, cgst: 56, sgst: 56, total: 2116.8
+    subtotal: 2240, discount: 150, tax: 104.5, cgst: 52.25, sgst: 52.25, total: 2194.5
   });
   assert.deepEqual(invoiceFigures.rows, [
-    { name: 'Groundnut Oil', sku: 'OIL-5L', hsn: '1508', qty: 2, price: 1120, gstPercent: 5, line: 2240, lineTax: 112 }
+    { name: 'Groundnut Oil', sku: 'OIL-5L', hsn: '1508', qty: 2, price: 1120, gstPercent: 5, line: 2240, lineTax: 104.5 }
   ]);
   assert.deepEqual(summary(checkoutFigures), {
     subtotal: 2240, discount: 150, tax: 104.5, cgst: 52.25, sgst: 52.25, total: 2194.5
   });
+});
+
+test('invoice #1004 uses its HSN GST slab and the checkout coupon total without a gstRate snapshot', function () {
+  var order = {
+    coupon: 'SAVE10',
+    items: [
+      { name: 'Groundnut Oil', sku: 'OIL-5L', hsn: '1508', price: 1120, qty: 2 }
+    ]
+  };
+  var invoiceFigures = invoice.computeInvoiceFigures(order);
+  var checkoutFigures = pricing.computeTotals(order.items, order.coupon);
+
+  assert.deepEqual(summary(invoiceFigures), {
+    subtotal: 2240, discount: 150, tax: 104.5, cgst: 52.25, sgst: 52.25, total: 2194.5
+  });
+  assert.deepEqual(summary(invoiceFigures), summary(checkoutFigures));
 });
 
 test('CURRENT BEHAVIOUR: invoice #1008 matches checkout for 18% items without a coupon', function () {
